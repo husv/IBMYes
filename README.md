@@ -91,6 +91,7 @@ IBM_ACCOUNT // IBM Cloud的登录邮箱和密码
 IBM_APP_NAME // 应用的名称
 REGION_NUM // 区域编码
 RESOURSE_ID // 资源组ID
+IBM_MEM_SIZE // 内存大小(M)
  ```
 
 具体后面会一步一步完成
@@ -157,6 +158,7 @@ IBM_ACCOUNT // IBM Cloud的登录邮箱和密码
 IBM_APP_NAME // 应用的名称
 REGION_NUM // 区域编码
 RESOURSE_ID // 资源组ID
+IBM_MEM_SIZE // 内存大小(M)
 ```
 
 
