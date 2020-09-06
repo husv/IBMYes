@@ -53,7 +53,12 @@ clone_repo(){
 install(){
     echo "进行安装。。。"
     cd ${SH_PATH}/v2ray-cloudfoundry
-    ibmcloud cf push
+    if [ -e "manifest.yml" -a -e "v2ray/v2ctl" -a -e "v2ray/v2ray" -a -e "v2ray/config.json" ]; then
+        ibmcloud cf push
+    else
+        echo "关键文件缺失"
+        exit 1
+    fi
 }
 
 clone_repo
