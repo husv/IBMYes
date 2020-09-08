@@ -4,11 +4,11 @@ cd ${SH_PATH}
 
 create_mainfest_file(){
     cat >  ${SH_PATH}/v2ray-cloudfoundry/manifest.yml  << EOF
-    applications:
-    - path: .
-      name: ${IBM_APP_NAME}
-      random-route: true
-      memory: ${IBM_MEM_SIZE}M
+applications:
+- path: .
+  name: ${IBM_APP_NAME}
+  random-route: true
+  memory: ${IBM_MEM_SIZE}M
 EOF
 
     echo "下载已有配置..请稍等"
@@ -19,7 +19,7 @@ EOF
     echo "处理完毕，开始推送..."
 }
 
-clone_repo(){
+init_and_clone_repo(){
     echo "进行初始化。。。"
     cd v2ray-cloudfoundry/v2ray
     # Upgrade V2Ray to the latest version
@@ -35,7 +35,7 @@ clone_repo(){
     fi
     RELEASE_LATEST="$(sed 'y/,/\n/' "$TMP_FILE" | grep 'tag_name' | awk -F '"' '{print $4}')"
     rm "$TMP_FILE"
-    echo "当前最新V2Ray版本为$RELEASE_LATEST"
+    echo "最新 V2Ray版本为 $RELEASE_LATEST"
     # Download latest release
     DOWNLOAD_LINK="https://github.com/v2fly/v2ray-core/releases/download/$RELEASE_LATEST/v2ray-linux-64.zip"
     if ! curl -s -L -H 'Cache-Control: no-cache' -o "latest-v2ray.zip" "$DOWNLOAD_LINK"; then
@@ -61,6 +61,6 @@ install(){
     fi
 }
 
-clone_repo
+init_and_clone_repo
 create_mainfest_file
 install

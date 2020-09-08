@@ -6,64 +6,79 @@ create_mainfest_file(){
     echo "进行配置。。。"
     read -p "请输入你的应用名称：" IBM_APP_NAME
     echo "应用名称：${IBM_APP_NAME}"
+    
     read -p "请输入你的应用内存大小(默认256)：" IBM_MEM_SIZE
     if [ -z "${IBM_MEM_SIZE}" ];then
-    IBM_MEM_SIZE=256
+        IBM_MEM_SIZE=256
     fi
-    echo "内存大小：${IBM_MEM_SIZE}"
-    UUID=$(cat /proc/sys/kernel/random/uuid)
-    echo "生成随机UUID：${UUID}"
-    WSPATH=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 16)
-    echo "生成随机WebSocket路径：${WSPATH}"
+    echo "应用内存大小：${IBM_MEM_SIZE}"
+    
+    read "V2Ray-core 连接缓存大小: (默认512): " V2RAY_MEM_SIZE
+    if [ -z "${V2RAY_MEM_SIZE}" ];then
+        V2RAY_MEM_SIZE=512
+    fi
+    echo "连接缓存大小: ${V2RAY_MEM_SIZE} kB"
+    
+    read "自定义 UUID(留空则自动生成): " UUID
+    if [ -z "${UUID}" ];then
+        UUID=$(cat /proc/sys/kernel/random/uuid)
+    fi
+    echo "UUID: ${UUID}"
+    
+    read "WebSocket 路径 (留空则自动生成): " WSPATH
+    if [ -z "${WSPATH}" ];then
+        WSPATH=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 16)
+    fi
+    echo "WebSocket 路径: ${WSPATH}"
     
     cat >  ${SH_PATH}/IBMYes/v2ray-cloudfoundry/manifest.yml  << EOF
-    applications:
-    - path: .
-      name: ${IBM_APP_NAME}
-      random-route: true
-      memory: ${IBM_MEM_SIZE}M
+applications:
+- path: .
+  name: ${IBM_APP_NAME}
+  random-route: true
+  memory: ${IBM_MEM_SIZE}M
 EOF
 
     cat >  ${SH_PATH}/IBMYes/v2ray-cloudfoundry/v2ray/config.json  << EOF
-    {
-        "inbounds": [
-            {
-                "port": 8080,
-                "protocol": "vmess",
-                "settings": {
-                    "clients": [
-                        {
-                            "id": "${UUID}",
-                            "alterId": 4
-                        }
-                    ]
-                },
-                "streamSettings": {
-                    "network":"ws",
-                    "wsSettings": {
-                        "path": "${WSPATH}"
+{
+    "inbounds": [
+        {
+            "port": 8080,
+            "protocol": "vmess",
+            "settings": {
+                "clients": [
+                    {
+                        "id": "${UUID}",
+                        "alterId": 4
                     }
+                ]
+            },
+            "streamSettings": {
+                "network":"ws",
+                "wsSettings": {
+                    "path": "${WSPATH}"
                 }
             }
-        ],
-        "outbounds": [
-            {
-                "protocol": "freedom",
-                "settings": {}
+        }
+    ],
+    "outbounds": [
+        {
+            "protocol": "freedom",
+            "settings": {}
+        }
+    ],
+    "policy": {
+        "levels": {
+            "0": {
+                "handshake": 5,
+                "connIdle": 60,
+                "uplinkOnly": 0,
+                "downlinkOnly": 0,
+                "bufferSize": ${V2RAY_MEM_SIZE}
             }
-        ],
-	"policy": {
-	    "levels": {
-	        "0": {
-		    "handshake": 5,
-		    "connIdle": 60,
-		    "uplinkOnly": 0,
-		    "downlinkOnly": 0,
-		    "bufferSize": 1024
-		}
-	    }
-	}
+        }
     }
+}
 EOF
     echo "配置完成。"
 }
@@ -104,25 +119,24 @@ install(){
     echo "进行安装。。。"
     cd ${SH_PATH}/IBMYes/v2ray-cloudfoundry
     ibmcloud target --cf
-    ibmcloud cf install
     ibmcloud cf push
     echo "安装完成。"
-    echo "生成的随机 UUID：${UUID}"
-    echo "生成的随机 WebSocket路径：${WSPATH}"
+    echo "UUID: ${UUID}"
+    echo "WebSocket路径: ${WSPATH}"
     VMESSCODE=$(base64 -w 0 << EOF
-    {
-      "v": "2",
-      "ps": "ibmyes",
-      "add": "ibmyes.us-south.cf.appdomain.cloud",
-      "port": "443",
-      "id": "${UUID}",
-      "aid": "4",
-      "net": "ws",
-      "type": "none",
-      "host": "",
-      "path": "${WSPATH}",
-      "tls": "tls"
-    }
+{
+  "v": "2",
+  "ps": "${IBM_APP_NAME}",
+  "add": "${IBM_APP_NAME}.us-south.cf.appdomain.cloud",
+  "port": "443",
+  "id": "${UUID}",
+  "aid": "4",
+  "net": "ws",
+  "type": "none",
+  "host": "",
+  "path": "${WSPATH}",
+  "tls": "tls"
+}
 EOF
     )
     echo "配置链接："
